@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>一个下拉框的例子说明表现和数据分离</title>
+    <script src="jquery-2.1.0.js"></script>
+</head>
+<body>
+<div id="bookList">
+    <select name="bookList">
+        <option value="">---请选择---</option>
+    </select>
+    <p class="js-bookList"></p>
+</div>
+
+<script>
+    $(function () {
+        //定义一个controller
+        var bookListController = {
+            init: function () {
+                this.view.initView();
+                this.start();
+            },
+            //选择视图操作
+            start: function () {
+                this.view.startAction();
+            },
+            //将用户发起的操作关联到模型数据上
+            setModel: function (value) {
+                this.model.setSelected(value);
+            }
+        };
+        //controller对model的处理
+        bookListController.model = {
+            bookData: [{
+                code: "001",
+                name: "深入浅出React和Redux",
+                author: "朴灵"
+            }, {
+                code: "002",
+                name: "深入浅出Nodejs",
+                author: "程墨"
+            }, {
+                code: "003",
+                name: "React与Redux开发实例精解",
+                author: "刘一齐"
+            }],
+            currSelected: "",
+            //处理模型数据
+            setSelected: function (value) {
+                this.currSelected = value;
+                this.handleChange();
+            },
+            //通知controller可更新view
+            handleChange: function () {
+                bookListController.view.updateResult();
+            },
+            //查询当前状态
+            getCurrentSelected: function () {
+                var currCode = this.currSelected;
+                var currBook = this.bookData.filter(function (value, index) {
+                    return value.code == currCode || null;
+                });
+                return currBook.length != 0 ?"《"+ currBook[0].name + "》 ---" + currBook[0].author : "";
+            }
+        };
+        //controller对view的掌控
+        bookListController.view = {
+            eleID: "bookList",
+            //初始化视图
+            initView: function () {
+                var ele = $("#" + this.eleID);
+                var sel = ele.children("[name=" + this.eleID + "]").first();
+                var data = bookListController.model.bookData;
+                $(data).each(function () {
+                    $("<option>", {value: this.code, html: this.name})
+                        .appendTo(sel);
+                })
+            },
+            //用户触发的change事件
+            startAction: function () {
+                var ele = $("#" + this.eleID);
+                var sel = ele.children("[name=" + this.eleID + "]").first();
+                sel.on('change', function () {
+                    this.handleChange(sel.val())
+                }.bind(this));
+            },
+            //通知controller更新model
+            handleChange: function (value) {
+                bookListController.setModel(value);
+            },
+            updateResult: function () {
+                var ele = $("#" + this.eleID);
+                var info = ele.children('.js-' + this.eleID).first();
+                info.html(bookListController.model.getCurrentSelected());
+            }
+        };
+        bookListController.init();
+    })
+</script>
+</body>
+</html>
